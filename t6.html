@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="MyApp" ng-init>
+<head>
+    <meta charset="UTF-8">
+    <title>测试指令生命周期</title>
+    <script src="framework/angular-1.3.0.14/angular.js"></script>
+</head>
+<body ng-controller="DemoController">
+<div>
+    <directive-life count="1">
+    </directive-life>
+    <directive-life count="2">
+    </directive-life>
+    <directive-life count="3">
+    </directive-life>
+</div>
+<div>
+    <directive-life count="4">
+        <directive-life count="5">
+            <directive-life count="6">
+            </directive-life>
+        </directive-life>
+    </directive-life>
+</div>
+</body>
+<script>
+    //step1
+    var myApp=angular.module('MyApp',[]);
+    myApp.directive('directiveLife',function ($log) {//注入$log对象   延迟注入
+        //step2 注册 只执行1次
+        $log.info('injecting function directiveLife');//类似  console.log();
+        return {
+            restrict : 'EA',
+            transclude: true,//可以嵌套
+            replace: true,
+            template:'<div><h2>count:{{count}}</h2><p ng-transclude></p> </div>',
+            //配置指令的独立作用域  默认指令和父指令共享作用域
+            scope:{
+                count: '=',//局部scope属性和指令scope属性建立双向绑定
+
+            },
+            //step3 编译 DOM  会将用到的该指令全部缓存起来 有默认动作 这里重新定义
+            compile: function (ele,iAttrs) {//原始dom节点和属性信息
+                $log.info('compile','count value from attribute: '+iAttrs.count);
+                //返回了闭包
+                return {
+                    //链接前
+                    pre:function (scope,elm,iAttrs) {
+                        $log.info('pre-link', 'count value from attribute: ' + iAttrs.count,
+                            'count value from scope: ' + scope.count);
+
+                    },
+                    //链接后  等价于link
+                    post:function (scope,elm,iAttrs) {
+                        $log.info('post-link', 'count value from attribute: ' + iAttrs.count,
+                            'count value from scope: ' + scope.count);
+
+                    }
+                }
+            },
+            //在指令中添加控制器:为指令模板提供支持
+            controller:function ($scope) {
+                $log.info('controller','count value from controller : '+$scope.count);
+            }
+        };
+    });
+    myApp.controller('DemoController',function () {
+        var vm=this;
+        return vm;
+    })
+
+</script>
+
+
+</html>
